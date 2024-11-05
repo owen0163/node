@@ -1,9 +1,17 @@
+const prisma = require("../config/prisma");
 
 
 
 exports.create = async(req, res) =>{
-    try {
-        res.send('create category in controllers')
+    try { 
+        const { name } = req.body
+        const category = await prisma.category.create({
+            data:{
+                name: name
+            }
+        });
+
+        res.json({ message: 'Category creation successful', category });
     }catch(err){
         console.log(err)
         res.status(500).json({message: "server error"})
