@@ -2,7 +2,8 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const prisma = require('../config/prisma');
 const { token } = require('morgan');
-
+//////////////////////////////////////////////////////////////////////////////////////
+// register
 exports.register = async (req, res) => {
 
     try {
@@ -40,7 +41,8 @@ exports.register = async (req, res) => {
     }
 
 }
-
+//////////////////////////////////////////////////////////////////////////////////////
+// login
 exports.login = async (req, res) => {
     try {
         const { email, password} = req.body
@@ -79,6 +81,8 @@ exports.login = async (req, res) => {
     }
 
 }
+//////////////////////////////////////////////////////////////////////////////////////
+// currentUser
 exports.currentUser = async (req, res) => {
     try {
         res.send('current user')
