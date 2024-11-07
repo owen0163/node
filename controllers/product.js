@@ -1,3 +1,4 @@
+const { query } = require("express");
 const prisma = require("../config/prisma");
 
 
@@ -146,7 +147,15 @@ exports.remove = async (req, res) => {
 
 exports.listby = async (req, res) => {
     try {
-        res.send('product BY')
+        const { sort, order, limit } = req.body
+        console.log(sort, order, limit)
+        const products = await prisma.product.findMany({
+            take: limit,
+            orderBy:{[sort]:order },
+            include:{ category: true }
+        })
+
+        res.send(products)
     } catch (err) {
         console.log(err)
         res.status(500).json({ message: "server error" })
@@ -156,9 +165,87 @@ exports.listby = async (req, res) => {
 //////////////////////////////////////////////////////////////////////////////////////
 // searchFilters
 
+//query
+const handleQuery = async (req, res, query) => {
+    try {
+        const products = await prisma.product.findMany({
+            where: {
+                title: {
+                    contains: query,
+                    mode: 'insensitive', // Makes the search case-insensitive
+                }
+            },
+            include:{
+                category:true,
+                images:true
+            }
+        });
+        return res.send(products); // Use return to prevent further execution
+    } catch (err) {
+        console.log(err);
+        return res.status(500).json({ message: "Search error" });
+    }
+};
+//price
+const handlePrice = async (req, res, priceRange) => {
+    try {
+        const products = await prisma.product.findMany({
+            where: {
+                price: {
+                    gte: priceRange[0],
+                    lte: priceRange[1]     
+                }
+            },
+            include:{
+                category: true,
+                images:true
+            }
+        });
+        return res.send(products); // Use return to prevent further execution
+    } catch (err) {
+        console.log(err);
+        return res.status(500).json({ message: "Search error" });
+    }
+};
+//category
+const handleCategory = async (req, res, categoryId) => {
+    try {    
+        const products = await prisma.product.findMany({
+            where: {
+                categoryId: {
+                    in: categoryId.map((id)=> Number(id))
+                }
+            },
+            include: {
+                category: true,
+                images: true
+            }
+        });
+        return res.send(products) // Use return to prevent further execution
+    } catch (err) {
+        console.log(err);
+        return res.status(500).json({ message: "Search error" });
+    }
+};
+
+
 exports.searchFilters = async (req, res) => {
     try {
-        res.send('product search/filters')
+        const { query, category, price } = req.body
+
+        if(query){
+            console.log('query-->',query)
+            await handleQuery(req, res, query)
+        }
+        if(category){
+            console.log('category-->', category)
+             await handleCategory(req, res, category)
+        }
+        if(price){
+            console.log('price-->', price)
+            await handlePrice(req, res, price)
+        }
+        
     } catch (err) {
         console.log(err)
         res.status(500).json({ message: "server error" })
