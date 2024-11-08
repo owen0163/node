@@ -213,7 +213,7 @@ const handleCategory = async (req, res, categoryId) => {
         const products = await prisma.product.findMany({
             where: {
                 categoryId: {
-                    in: categoryId.map((id)=> Number(id))
+                    in: categoryId.map((id) => Number(id)) 
                 }
             },
             include: {
@@ -221,9 +221,9 @@ const handleCategory = async (req, res, categoryId) => {
                 images: true
             }
         });
-        return res.send(products) // Use return to prevent further execution
+        return res.send(products); // Return to prevent further execution
     } catch (err) {
-        console.log(err);
+        console.error("Error in handleCategory:", err);
         return res.status(500).json({ message: "Search error" });
     }
 };
