@@ -1,8 +1,18 @@
+const prisma = require("../config/prisma")
 
 
 exports.listUser = async (req, res) => {
     try{
-        res.send('hello users')
+        const user = await prisma.user.findMany({
+            select:{
+                id:true,
+                email:true,
+                role:true,
+                enabled:true,
+                address:true
+            }
+        })
+        res.send(user)
     }catch(err){
         console.log(err)
         res.status(500).json({message: "server error"})
@@ -12,6 +22,8 @@ exports.listUser = async (req, res) => {
 
 exports.changeStatus = async (req, res) => {
     try{
+        const { id, enabled } = req.body
+        console.log(id, enabled)
         res.send('hello changeStatus')
     }catch(err){
         console.log(err)
