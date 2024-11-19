@@ -136,17 +136,45 @@ exports.getUserCart = async (req, res) => {
 
 exports.emptyCart = async (req, res) => {
     try{
-        res.send('hello emptyCart')
+        const cart = await prisma.cart.findFirst({
+            where: { orderedBy: Number(req.user.id)}
+        })
+        if (!cart) {
+            return res.status(404).json({ message: " no cart" });
+        }
+        await prisma.productOnCart.deleteMany({
+            where: { cartId: cart.id }
+        })
+        const result = await prisma.cart.deleteMany({
+            where:{ orderedBy: Number(req.user.id)}
+        })
+        console.log(result)
+        res.json({message: 'cart empty success', deleteCount: result.count})
     }catch(err){
         console.log(err)
         res.status(500).json({message: "server error"})
+        
     }
 }
 
 
 exports.saveAddress = async (req, res) => {
     try{
-        res.send('hello saveAddress')
+        const { address } = req.body
+        console.log(address)
+
+        const addressUser = await prisma.user.update({
+            where: {
+                id: Number(req.user.id)
+
+            },
+            data:{
+                address: address
+            }
+        })
+
+
+        res.json({ok : true, message: 'Address update success'})
     }catch(err){
         console.log(err)
         res.status(500).json({message: "server error"})
@@ -157,6 +185,26 @@ exports.saveAddress = async (req, res) => {
 
 exports.saveOrder = async (req, res) => {
     try{
+        const userCart = await prisma.cart.findFirst({
+            where: { orderedBy: Number(req.user.id)},
+            include:{   products:true }
+        })
+
+        //check cart empty
+        if(!userCart || userCart.products.length === 0) {
+           return res.status(400).json({ok : false, message: 'cart is empty'})
+        }
+        //check quantity
+        for(const item of userCart.products){
+            console.log(item)
+            const productIN = await prisma.product.findUnique({
+                where : { id : item.productId},
+                select: { quantity : true, title: true}
+            })
+            console.log(productIN )
+        }
+      
+       
         res.send('hello saveOrder')
     }catch(err){
         console.log(err)
