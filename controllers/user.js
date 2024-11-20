@@ -197,15 +197,36 @@ exports.saveOrder = async (req, res) => {
         //check quantity
         for(const item of userCart.products){
             console.log(item)
-            const productIN = await prisma.product.findUnique({
-                where : { id : item.productId},
+            const product = await prisma.product.findUnique({
+                where : { id : item.productId},  
                 select: { quantity : true, title: true}
             })
-            console.log(productIN )
+            // console.log(item)
+            // console.log(product)
+            if(!product || item.count > product.quantity){
+                return res.status(400).json({
+                    ok: false,
+                    message: `stock dont have Product ${product?.title || 'product'} `
+                })
+            }
         }
-      
-       
-        res.send('hello saveOrder')
+        const order = await prisma.order.create({
+            data: {
+                products: {
+                    create: userCart.products.map((item) => ({
+                        productId: item.productId,
+                        count: item.count,
+                        price: item.price
+                    }))
+                },
+                user:{
+                    connect: { id: req.user.id}
+                },
+                cartTotal: userCart.cartTotal
+            }
+        })
+        console.log(order),
+        res.send(order)
     }catch(err){
         console.log(err)
         res.status(500).json({message: "server error"})
