@@ -225,8 +225,24 @@ exports.saveOrder = async (req, res) => {
                 cartTotal: userCart.cartTotal
             }
         })
-        console.log(order),
-        res.send(order)
+
+        const update = userCart.products.map((item) =>({
+                where: { id: item.productId},
+                data: {
+                    quantity: { decrement: item.count},
+                    sold: { increment: item.count}
+                }
+        }))
+        console.log(update)
+
+        await Promise.all(
+            update.map((updated)=> prisma.product.update(updated))
+        )
+        await prisma.cart.deleteMany({
+            where: { orderedBy: Number(req.user.id)}
+        })
+
+        res.json({ok: true, order})
     }catch(err){
         console.log(err)
         res.status(500).json({message: "server error"})
@@ -235,9 +251,27 @@ exports.saveOrder = async (req, res) => {
 
 
 
+
 exports.getOrder = async (req, res) => {
     try{
-        res.send('hello getOrder')
+
+const orders = await prisma.order.findMany({
+    where: { orderedBy: Number(req.user.id) },
+    include: {
+        products:{
+                include:{
+                    product:true
+                }
+        }
+    }
+})
+if (orders.length === 0 ){
+    return res.status(400).json({ ok: false, message:'no orders'})
+}
+
+    res.json({ ok: true, orders})
+    console.log(orders)
+
     }catch(err){
         console.log(err)
         res.status(500).json({message: "server error"})
